@@ -20,7 +20,9 @@ latest_batch = batches[-1]
 
 # 遍历批次下每个任务目录的 verifier/reward.txt
 rewards = []
+task_count = 0
 for task_dir in glob.glob(os.path.join(latest_batch, "*")):
+    task_count += 1
     reward_file = os.path.join(task_dir, "verifier", "reward.txt")
     if os.path.isfile(reward_file):
         try:
@@ -31,6 +33,6 @@ for task_dir in glob.glob(os.path.join(latest_batch, "*")):
             continue
 
 if rewards:
-    print(round(sum(rewards) / len(rewards), 4))
+    print(round(sum(rewards) / task_count, 2))
 else:
     print(0.0)
