@@ -66,7 +66,7 @@ def main():
                     continue
                 if item_path.is_dir():
                     for file_path in sorted(item_path.rglob('*')):
-                        zf.write(file_path, file_path.relative_to(base_dir))
+                        zf.write(file_path, file_path.relative_to(base_dir).as_posix())
                 else:
                     zf.write(item_path, item)
     except Exception as e:
