@@ -32,7 +32,7 @@
       "ExitCode": "0",
       "VerifyScript": "./pass_rate.py",
       "MatchResult": "(0,0.5]",
-      "ResultFormat":"\n检测项目:模型通过率\n检测结果:${Vaild_Result}\nReward:${Script_Output}"
+      "ResultFormat":"\n检测项目:模型通过率\n检测结果:${Vaild_Result}\n通过率:${Script_Output}"
     }
   ]
 }
