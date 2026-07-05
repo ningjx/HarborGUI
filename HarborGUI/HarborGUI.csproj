@@ -28,8 +28,8 @@
     <None Update="Config\config.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
-    <!-- 自定义脚本 -->
-    <None Update="Config\pack_files.py">
+    <!-- Config 目录下所有 Python 脚本 -->
+    <None Update="Config\*.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
