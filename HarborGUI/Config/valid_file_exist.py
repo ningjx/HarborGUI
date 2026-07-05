@@ -24,9 +24,7 @@ required = [
 missing = [p for p in required if not os.path.exists(os.path.join(cwd, p))]
 
 if missing:
-    print(f"以下文件不存在:")
-    for p in missing:
-        print(f" {p}")
+    print("以下文件不存在:" + " ".join(missing))
     sys.exit(0)
 else:
     print(0)
