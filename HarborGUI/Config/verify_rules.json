@@ -1,0 +1,38 @@
+{
+  "VerifyRules": [
+    {
+      "RuleName": "文件完整性",
+      "Commands": ["$env:PYTHONUTF8 = \"1\""],
+      "ExitCode": "0",
+      "VerifyScript": "./valid_file_exist.py",
+      "MatchResult": "0",
+      "FailContinue": false,
+      "ResultFormat":"\n检测项目:文件完整性\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
+    },
+    {
+      "RuleName": "Docker构建",
+      "Commands": ["docker build -t ${task.environment.docker_image} .\\environment\\"],
+      "ExitCode": "0",
+      "MatchResult": "0",
+      "FailContinue": false,
+      "ResultFormat":"\n检测项目:Docker构建\n检测结果:${Vaild_Result}"
+    },
+    {
+      "RuleName": "Oracle验证",
+      "Commands": ["$env:PYTHONUTF8 = \"1\"", "uv run harbor job start -p . -a oracle"],
+      "ExitCode": "0",
+      "VerifyScript": "./pass_rate.py",
+      "MatchResult": "1.0",
+      "FailContinue": false,
+      "ResultFormat":"\n检测项目:Oracle验证\n检测结果:${Vaild_Result}\nReward:${Script_Output}"
+    },
+    {
+      "RuleName": "模型通过率",
+      "Commands": ["$env:PYTHONUTF8 = \"1\"", "uv run harbor job start -p . -a claude-code -m model -k 4 -n 4 --ae ANTHROPIC_API_KEY=${API_KEY} --ae ANTHROPIC_BASE_URL=${Base_URL} anthropic --ae ANTHROPIC_MODEL=${Model_Name} --agent-kwarg reasoning_effort=max --agent-kwarg disallowed_tools=\"EnterPlanMode,ExitPlanMode,AskUserQuestion\""],
+      "ExitCode": "0",
+      "VerifyScript": "./pass_rate.py",
+      "MatchResult": "(0,0.5]",
+      "ResultFormat":"\n检测项目:模型通过率\n检测结果:${Vaild_Result}\nReward:${Script_Output}"
+    }
+  ]
+}

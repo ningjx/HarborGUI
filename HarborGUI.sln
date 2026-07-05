@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35825.156
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HarborGUI", "HarborGUI\HarborGUI.csproj", "{B6C3D110-B333-4872-9252-D63BF70FD028}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\TestProject.csproj", "{A0ABAC35-97A3-4DA6-B23D-851FCC8308BB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B6C3D110-B333-4872-9252-D63BF70FD028}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6C3D110-B333-4872-9252-D63BF70FD028}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6C3D110-B333-4872-9252-D63BF70FD028}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6C3D110-B333-4872-9252-D63BF70FD028}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0ABAC35-97A3-4DA6-B23D-851FCC8308BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0ABAC35-97A3-4DA6-B23D-851FCC8308BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0ABAC35-97A3-4DA6-B23D-851FCC8308BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0ABAC35-97A3-4DA6-B23D-851FCC8308BB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3D5ADF35-EF10-416B-ADD9-51410DCBD453}
+	EndGlobalSection
+EndGlobal

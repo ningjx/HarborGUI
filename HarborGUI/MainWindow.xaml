@@ -1,0 +1,557 @@
+<Window x:Class="HarborGUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HarborGUI"
+        xmlns:vm="clr-namespace:HarborGUI.ViewModels"
+        xmlns:models="clr-namespace:HarborGUI.Models"
+        xmlns:conv="clr-namespace:HarborGUI.Converters"
+        mc:Ignorable="d"
+        Title="HarborGUI - 批量质检工具"
+        Height="700" Width="1100"
+        MinHeight="500" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F5F5">
+
+    <Window.Resources>
+        <conv:StatusToColorConverter x:Key="StatusToColorConverter"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <conv:ProgressToPercentConverter x:Key="ProgressToPercentConverter"/>
+        <conv:ProgressToTaskbarConverter x:Key="ProgressToTaskbarConverter"/>
+        <conv:BoolToEyeConverter x:Key="BoolToEyeConverter"/>
+
+        <!-- 卡片样式 -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.1"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 主按钮 -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="MinWidth" Value="90"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Background" Value="#0078D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#106EBE"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#A0A0A0"/>
+                    <Setter Property="Cursor" Value="Arrow"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 次按钮 -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="MinWidth" Value="80"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Background" Value="#E8E8E8"/>
+            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D0D0D0"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 文本框样式 -->
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+
+        <!-- 扁平化表头样式 -->
+        <Style x:Key="ModernColumnHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F5F5F5"/>
+            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridColumnHeader">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}"
+                                    Padding="{TemplateBinding Padding}"
+                                    SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  RecognizesAccessKey="True"
+                                                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                            </Border>
+                            <Rectangle Fill="#D0D0D0" Height="1" VerticalAlignment="Bottom"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- DataGrid 通用样式 -->
+        <Style x:Key="ModernDataGridStyle" TargetType="DataGrid">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#FAFAFA"/>
+            <Setter Property="AlternationCount" Value="2"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#E8E8E8"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="ColumnHeaderHeight" Value="36"/>
+            <Setter Property="RowHeight" Value="36"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="CanUserResizeRows" Value="False"/>
+            <Setter Property="CanUserReorderColumns" Value="False"/>
+            <Setter Property="ColumnHeaderStyle" Value="{StaticResource ModernColumnHeaderStyle}"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="BorderBrush" Value="#0078D4"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="Black"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>    </Window.Resources>
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo ProgressValue="{Binding OverallProgress, Converter={StaticResource ProgressToTaskbarConverter}}"
+                         ProgressState="Normal"/>
+    </Window.TaskbarItemInfo>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ============ 标题栏 ============ 
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="HarborGUI 批量质检" FontSize="20" FontWeight="Bold"
+                           Foreground="#0078D4" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="设定工作目录 → 选择任务 → 选择规则 → 开始质检"
+                           Foreground="#888" VerticalAlignment="Center" HorizontalAlignment="Right"
+                           FontSize="14"/>
+            </Grid>
+        </Border>-->
+
+        <!-- ============ 主内容区：左侧任务列表 + 右侧规则面板 ============ -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="250"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 左侧：任务列表 -->
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 任务列表标题 + 全选 -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="📦 任务列表" FontWeight="Bold" FontSize="14"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Tasks.Count, StringFormat=' ({0} 个)'}"
+                                   Foreground="#888" VerticalAlignment="Center" Margin="4,0,0,0"/>
+
+                        <CheckBox Content="全选" Margin="20,0,0,0"
+                                  IsChecked="{Binding IsSelectAllChecked}"
+                                  VerticalAlignment="Center"
+                                  IsEnabled="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
+                    </StackPanel>
+
+                    <!-- 任务 DataGrid（动态列由 code-behind 生成） -->
+                    <DataGrid x:Name="TaskDataGrid" Grid.Row="1" ItemsSource="{Binding Tasks}"
+                              Style="{StaticResource ModernDataGridStyle}">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="选择" Width="50">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center" IsEnabled="{Binding DataContext.IsRunning, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="状态" Width="86">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="10" Padding="6,3" MinWidth="54" Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding StatusText}" FontSize="11" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="耗时" Binding="{Binding ElapsedText}" Width="65" MinWidth="55">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="Foreground" Value="#888"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTemplateColumn Header="文件名" Width="*" MinWidth="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding FileName}" Cursor="Hand"
+                                                   VerticalAlignment="Center" FontSize="14" Foreground="#000"
+                                                   MouseLeftButtonDown="FileName_Click" Tag="{Binding}"
+                                                   ToolTip="点击打开数据文件夹"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- 中间分隔线 -->
+            <GridSplitter Grid.Column="1" Width="4" Background="Transparent"
+                          HorizontalAlignment="Stretch"/>
+
+            <!-- 右侧：规则面板 + 操作按钮 -->
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="0,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 设置标题 -->
+                    <TextBlock Grid.Row="0" Text="🔧 设置" FontWeight="Bold" FontSize="14"
+                               Margin="0,0,0,8"/>
+
+                    <!-- 工作目录 -->
+                    <Grid Grid.Row="1" Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="11" Height="28" ToolTip="包含 .zip 任务文件的文件夹"/>
+                        <Button Grid.Column="1" Content="📂" Width="32" Height="28"
+                                Style="{StaticResource SecondaryButtonStyle}" Margin="4,0,0,0"
+                                Command="{Binding BrowseDirectoryCommand}" ToolTip="选择工作目录"/>
+                    </Grid>
+
+                    <!-- 配置文件路径 -->
+                    <Grid Grid.Row="2" Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding ConfigPath, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="11" Height="28" ToolTip="质检规则配置文件路径"/>
+                        <Button Grid.Column="1" Content="📂" Width="32" Height="28"
+                                Style="{StaticResource SecondaryButtonStyle}" Margin="4,0,0,0"
+                                Click="BrowseConfig_Click" ToolTip="选择配置文件"/>
+                    </Grid>
+
+                    <!-- 环境变量编辑区 -->
+                    <Expander Grid.Row="3" Header="🔑 参数配置" 
+                              IsExpanded="False" FontWeight="SemiBold" FontSize="14"
+                              Margin="0,0,0,6">
+                        <Grid Margin="0,6,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="命令中的 ${KEY} 将被替换为下面的值；${task.xxx} 从 task.toml 提取"
+                                       FontSize="10" Foreground="#888" TextWrapping="Wrap" Margin="0,0,0,6"/>
+
+                            <!-- 环境变量列表 -->
+                            <ItemsControl Grid.Row="1" ItemsSource="{Binding EnvVars}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" 
+                                                     Text="{Binding Key, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontSize="11" Height="26" Margin="0,0,4,0"
+                                                     Background="#F0F0F0"
+                                                     ToolTip="变量名（不含 ${}）"/>
+
+                                            <!-- 普通字段：直接明文 -->
+                                            <TextBox Grid.Column="1"
+                                                     Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontSize="11" Height="26"
+                                                     Visibility="{Binding IsSecret, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
+
+                                            <!-- 密钥字段：隐藏时显示掩码 -->
+                                            <TextBox Grid.Column="1"
+                                                     Text="{Binding MaskedValue, Mode=OneWay}"
+                                                     FontSize="11" Height="26" IsReadOnly="True"
+                                                     Background="#FAFAFA"
+                                                     Visibility="{Binding IsSecret, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <TextBox.Style>
+                                                    <Style TargetType="TextBox">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsValueVisible}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBox.Style>
+                                            </TextBox>
+
+                                            <!-- 密钥字段：显示时可编辑 -->
+                                            <TextBox Grid.Column="1"
+                                                     Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontSize="11" Height="26"
+                                                     Visibility="Collapsed">
+                                                <TextBox.Style>
+                                                    <Style TargetType="TextBox">
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding IsSecret}" Value="True"/>
+                                                                    <Condition Binding="{Binding IsValueVisible}" Value="True"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBox.Style>
+                                            </TextBox>
+
+                                            <Button Grid.Column="2"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Width="26" Height="26" MinWidth="0" Margin="2,0,0,0"
+                                                    Padding="0" FontSize="12"
+                                                    Visibility="{Binding IsSecret, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                    Click="ToggleEnvVisibility_Click"
+                                                    Tag="{Binding}"
+                                                    ToolTip="显示/隐藏">
+                                                👁
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <Button Grid.Row="2" Content="💾 保存配置" 
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Height="28" FontSize="12" Margin="0,4,0,0"
+                                    Command="{Binding SaveConfigCommand}"/>
+                        </Grid>
+                    </Expander>
+
+                    <!-- 规则标题 -->
+                    <TextBlock Grid.Row="4" Text="🔍 质检规则" FontWeight="Bold" FontSize="14"
+                               Margin="0,0,0,6"/>
+
+                    <!-- 规则列表（可滚动） -->
+                    <ScrollViewer Grid.Row="5" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Rules}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#F8F8F8" CornerRadius="6" Padding="10"
+                                            Margin="0,0,0,6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding IsSelected}"
+                                                      VerticalAlignment="Top" Margin="0,2,10,0"
+                                                      IsEnabled="{Binding DataContext.IsRunning, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding RuleName}" FontWeight="SemiBold"
+                                                           FontSize="14" TextWrapping="Wrap"/>
+                                                <TextBlock FontSize="11" Foreground="#888"
+                                                           TextWrapping="Wrap" Margin="0,2,0,0">
+                                                    <Run Text="命令数:"/>
+                                                    <Run Text="{Binding Commands.Count, Mode=OneTime}"/>
+                                                    <Run Text=" | 退出码:"/>
+                                                    <Run Text="{Binding ExitCode, Mode=OneTime}"/>
+                                                    <Run Text=" | 期望:"/>
+                                                    <Run Text="{Binding MatchResult, Mode=OneTime}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- 操作按钮 -->
+                    <StackPanel Grid.Row="6" Margin="0,10,0,0">
+                        <!-- 并行数 -->
+                        <Grid Margin="0,0,0,6" Height="26">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="45"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="⚡ 并行:" FontSize="11" VerticalAlignment="Center" Foreground="#666" Margin="0,0,4,0"/>
+                            <TextBox Grid.Column="1" Text="{Binding ParallelCount, UpdateSourceTrigger=PropertyChanged}"
+                                     FontSize="11" Height="24" VerticalContentAlignment="Center"
+                                     TextAlignment="Center" ToolTip="最大并行任务数（0=不限）"/>
+                            <TextBlock Grid.Column="2" Text="0=不限" FontSize="10" Foreground="#AAA" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                        </Grid>
+                        <!-- 日志打开工具 -->
+                        <Grid Margin="0,0,0,6" Height="26">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="📄 日志工具:" FontSize="11" VerticalAlignment="Center" Foreground="#666" Margin="0,0,4,0"/>
+                            <ComboBox Grid.Column="1" SelectedValue="{Binding LogTool}" SelectedValuePath="Tag"
+                                      Height="24" FontSize="11" ToolTip="选择打开质检日志的工具">
+                                <ComboBoxItem Content="记事本" Tag="notepad"/>
+                                <ComboBoxItem Content="VS Code" Tag="vscode"/>
+                            </ComboBox>
+                        </Grid>
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="🔄 刷新" Style="{StaticResource SecondaryButtonStyle}"
+                                    Height="30" FontSize="12" Margin="0,0,4,0"
+                                    Command="{Binding RefreshTasksCommand}"/>
+                            <Button Grid.Column="1" Content="{Binding CustomButtonLabel}" Style="{StaticResource SecondaryButtonStyle}"
+                                    Height="30" FontSize="12" Margin="4,0,0,0"
+                                    Command="{Binding CustomButtonCommand}"/>
+                        </Grid>
+                        <Button Content="▶ 开始质检" Style="{StaticResource PrimaryButtonStyle}"
+                                Height="42" FontSize="15" Margin="0,4,0,0"
+                                Command="{Binding RunVerifyCommand}"/>
+                        <Button Content="⏹ 取消" Style="{StaticResource SecondaryButtonStyle}"
+                                Height="36" Margin="0,6,0,0" FontSize="14"
+                                Foreground="#D12B1F" Command="{Binding CancelCommand}"/>
+                    </StackPanel>
+
+
+                    <TextBlock Grid.Row="7" Text="{Binding CurrentTaskProgress}"
+                               FontSize="12" Foreground="#0078D4"
+                               TextWrapping="Wrap" Margin="0,6,0,0"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ============ 底部状态栏 ============ -->
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="📊 总进度：" VerticalAlignment="Center" FontSize="14"
+                               Margin="0,0,6,0"/>
+                    <ProgressBar Width="200" Height="10" Value="{Binding OverallProgress}"
+                                 Foreground="#0078D4" Background="#E8E8E8"
+                                 BorderThickness="0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding OverallProgress, Converter={StaticResource ProgressToPercentConverter}}"
+                               VerticalAlignment="Center" Margin="6,0,0,0" FontSize="14"
+                               FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock Text="{Binding StatusMessage}"
+                               FontSize="14" Foreground="#555"
+                               VerticalAlignment="Center"/>
+                    <Button Content="📋" Width="28" Height="28" MinWidth="0" Padding="0"
+                            Margin="8,0,0,0" FontSize="12"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding ShowLogCommand}"
+                            ToolTip="查看执行日志"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
