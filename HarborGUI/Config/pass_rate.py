@@ -22,6 +22,8 @@ latest_batch = batches[-1]
 rewards = []
 task_count = 0
 for task_dir in glob.glob(os.path.join(latest_batch, "*")):
+    if not os.path.isdir(task_dir):
+        continue
     task_count += 1
     reward_file = os.path.join(task_dir, "verifier", "reward.txt")
     if os.path.isfile(reward_file):
