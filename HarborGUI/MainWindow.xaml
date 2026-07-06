@@ -367,18 +367,22 @@
                                                      FontSize="11" Height="26"
                                                      Visibility="{Binding IsSecret, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
 
-                                            <!-- 密钥字段：隐藏时显示掩码 -->
+                                            <!-- 密钥字段：隐藏时显示掩码（只读） -->
                                             <TextBox Grid.Column="1"
                                                      Text="{Binding MaskedValue, Mode=OneWay}"
                                                      FontSize="11" Height="26" IsReadOnly="True"
-                                                     Background="#FAFAFA"
-                                                     Visibility="{Binding IsSecret, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                     Background="#FAFAFA">
                                                 <TextBox.Style>
                                                     <Style TargetType="TextBox">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsValueVisible}" Value="True">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                            </DataTrigger>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding IsSecret}" Value="True"/>
+                                                                    <Condition Binding="{Binding IsValueVisible}" Value="False"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </MultiDataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </TextBox.Style>
@@ -387,10 +391,10 @@
                                             <!-- 密钥字段：显示时可编辑 -->
                                             <TextBox Grid.Column="1"
                                                      Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
-                                                     FontSize="11" Height="26"
-                                                     Visibility="Collapsed">
+                                                     FontSize="11" Height="26">
                                                 <TextBox.Style>
                                                     <Style TargetType="TextBox">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
                                                         <Style.Triggers>
                                                             <MultiDataTrigger>
                                                                 <MultiDataTrigger.Conditions>
