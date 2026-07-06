@@ -28,7 +28,7 @@
     },
     {
       "RuleName": "模型通过率",
-      "Commands": ["$env:PYTHONUTF8 = \"1\"", "uv run harbor job start -p . -a claude-code -m model -k 4 -n 4 --ae ANTHROPIC_API_KEY=${API_KEY} --ae ANTHROPIC_BASE_URL=${Base_URL} anthropic --ae ANTHROPIC_MODEL=${Model_Name} --agent-kwarg reasoning_effort=max --agent-kwarg disallowed_tools=\"EnterPlanMode,ExitPlanMode,AskUserQuestion\""],
+      "Commands": ["$env:PYTHONUTF8 = \"1\"", "uv run harbor job start -p . -a claude-code -m model -k 4 -n 4 --ae ANTHROPIC_API_KEY=${API_KEY} --ae ANTHROPIC_BASE_URL=${Base_URL} --ae ANTHROPIC_MODEL=${Model_Name} --agent-kwarg reasoning_effort=max --agent-kwarg disallowed_tools=\"EnterPlanMode,ExitPlanMode,AskUserQuestion\""],
       "ExitCode": "0",
       "VerifyScript": "./pass_rate.py",
       "MatchResult": "(0,0.5]",
