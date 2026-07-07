@@ -69,10 +69,16 @@ public partial class VerifyService : IVerifyService
 
             try
             {
+                // 构造运行时变量（在整个规则验证过程中可用）
+                var runtimeVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["Zip_Path"] = task.FullPath
+                };
+
                 // 阶段1：解析变量 + 运行命令
                 if (rule.Commands.Count > 0)
                 {
-                    var resolvedCommands = _variableResolver.ResolveAll(rule.Commands, taskDir);
+                    var resolvedCommands = _variableResolver.ResolveAll(rule.Commands, taskDir, runtimeVars);
                     _log.Debug($"规则 [{rule.RuleName}] 解析后命令: {string.Join(" | ", resolvedCommands)}");
                     taskLog.WriteLine($"执行命令: {string.Join("; ", resolvedCommands)}");
                     var cmdResults = await _processRunner.RunSequenceAsync(
@@ -112,9 +118,22 @@ public partial class VerifyService : IVerifyService
                 // 第二阶段：运行验证脚本（如果配置了）
                 if (!string.IsNullOrWhiteSpace(rule.VerifyScript))
                 {
-                    // 脚本路径相对于 Config 目录解析
+                    // 脚本路径相对于 Config 目录解析（支持 ${Zip_Path} 等变量和参数）
                     var configDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config");
-                    var relativePath = rule.VerifyScript.TrimStart('.', '/', '\\');
+                    var resolvedScript = _variableResolver.Resolve(rule.VerifyScript, taskDir, runtimeVars);
+                    var spaceIdx = resolvedScript.IndexOf(' ');
+                    string scriptPart, argsPart;
+                    if (spaceIdx >= 0)
+                    {
+                        scriptPart = resolvedScript[..spaceIdx];
+                        argsPart = resolvedScript[(spaceIdx + 1)..].TrimStart();
+                    }
+                    else
+                    {
+                        scriptPart = resolvedScript;
+                        argsPart = "";
+                    }
+                    var relativePath = scriptPart.TrimStart('.', '/', '\\');
                     var scriptPath = Path.Combine(configDir, relativePath);
                     if (!File.Exists(scriptPath))
                     {
@@ -131,7 +150,7 @@ public partial class VerifyService : IVerifyService
                     var psi = new ProcessStartInfo
                     {
                         FileName = "python",
-                        Arguments = $"\"{scriptPath}\"",
+                        Arguments = string.IsNullOrEmpty(argsPart) ? $"\"{scriptPath}\"" : $"\"{scriptPath}\" {argsPart}",
                         WorkingDirectory = taskDir,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
@@ -142,8 +161,9 @@ public partial class VerifyService : IVerifyService
                     };
                     psi.Environment["PYTHONUTF8"] = "1";
 
-                    _log.Debug($"运行验证脚本: {scriptPath}, 工作目录: {taskDir}");
-                    taskLog.WriteLine($"验证脚本: {scriptPath}");
+                    var logCmd = string.IsNullOrEmpty(argsPart) ? scriptPath : $"{scriptPath} {argsPart}";
+                    _log.Debug($"运行验证脚本: {logCmd}, 工作目录: {taskDir}");
+                    taskLog.WriteLine($"验证脚本: {logCmd}");
 
                     using var process = Process.Start(psi);
                     if (process == null)

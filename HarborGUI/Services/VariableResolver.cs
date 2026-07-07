@@ -5,134 +5,161 @@ using HarborGUI.Services.Interfaces;
 namespace HarborGUI.Services;
 
 /// <summary>
-/// 变量解析器：替换命令中的 ${...} 占位符
-/// 
-/// 解析优先级：
-///   1. ${task.XXX} → 从任务目录的 task.toml 中用正则提取
-///   2. ${KEY}     → 从 AppConfig.EnvironmentVariables 字典取值
+/// 变量解析器：将命令中的 ${...} 占位符替换为实际值
+///
+/// 解析优先级（由 Provider 注册顺序决定）：
+///   1. 运行时变量（如 ${Zip_Path}，通过 runtimeVars 参数传入）
+///   2. ${task.XXX} → 从任务目录的 task.toml 中用正则提取
+///   3. ${KEY}     → 从 AppConfig.EnvironmentVariables 字典取值
+///   4. 系统环境变量 → Environment.GetEnvironmentVariable
+///   5. 无法解析    → 保留原占位符
 /// </summary>
 public partial class VariableResolver : IVariableResolver
 {
-    private readonly Dictionary<string, string> _envVars;
+    private readonly List<IVariableProvider> _fixedProviders;
 
     public VariableResolver(Dictionary<string, string> environmentVariables)
     {
-        _envVars = new Dictionary<string, string>(environmentVariables, StringComparer.OrdinalIgnoreCase);
+        _fixedProviders =
+        [
+            new TomlVariableProvider(),
+            new ConfigVariableProvider(environmentVariables),
+        ];
     }
 
-    /// <summary>
-    /// 更新环境变量字典（当用户在 UI 中修改配置后调用）
-    /// </summary>
     public void UpdateEnvironmentVariables(Dictionary<string, string> envVars)
     {
-        _envVars.Clear();
-        foreach (var kv in envVars)
-            _envVars[kv.Key] = kv.Value;
+        foreach (var provider in _fixedProviders)
+        {
+            if (provider is ConfigVariableProvider configProvider)
+            {
+                configProvider.Update(envVars);
+                return;
+            }
+        }
     }
 
-    public string Resolve(string command, string? taskDirectory = null)
+    public string Resolve(string command, string? taskDirectory = null,
+        IReadOnlyDictionary<string, string>? runtimeVars = null)
     {
         if (string.IsNullOrEmpty(command))
             return command;
 
+        var chain = BuildChain(runtimeVars);
+        return ResolveInternal(command, taskDirectory, chain);
+    }
+
+    public List<string> ResolveAll(List<string> commands, string? taskDirectory = null,
+        IReadOnlyDictionary<string, string>? runtimeVars = null)
+    {
+        var chain = BuildChain(runtimeVars);
+        return commands.Select(c => ResolveInternal(c, taskDirectory, chain)).ToList();
+    }
+
+    private string ResolveInternal(string command, string? taskDirectory, IEnumerable<IVariableProvider> providers)
+    {
         return VariablePattern().Replace(command, match =>
         {
             var varName = match.Groups[1].Value;
 
-            // 1. 尝试从 task.toml 解析
-            if (varName.StartsWith("task.", StringComparison.OrdinalIgnoreCase) && taskDirectory != null)
+            foreach (var provider in providers)
             {
-                var tomlValue = ResolveFromToml(varName, taskDirectory);
-                if (tomlValue != null)
-                    return tomlValue;
+                var result = provider.TryResolve(varName, taskDirectory);
+                if (result != null)
+                    return result;
             }
 
-            // 2. 尝试从环境变量字典取值
-            if (_envVars.TryGetValue(varName, out var envValue) && !string.IsNullOrEmpty(envValue))
-                return envValue;
-
-            // 3. 兜底：保留原样（或尝试系统环境变量）
             var sysEnv = Environment.GetEnvironmentVariable(varName);
             if (!string.IsNullOrEmpty(sysEnv))
                 return sysEnv;
 
-            // 无法解析，保留原占位符（可能在运行时由 shell 解析）
             return match.Value;
         });
     }
 
-    public List<string> ResolveAll(List<string> commands, string? taskDirectory = null)
+    private IEnumerable<IVariableProvider> BuildChain(IReadOnlyDictionary<string, string>? runtimeVars)
     {
-        return commands.Select(c => Resolve(c, taskDirectory)).ToList();
-    }
+        if (runtimeVars is null)
+            return _fixedProviders;
 
-    // ==================== TOML 正则解析 ====================
-
-    /// <summary>
-    /// 从 task.toml 中用正则提取变量值
-    /// 路径映射规则：
-    ///   ${task.name}                   → [task] 段, key=name
-    ///   ${task.environment.docker_image} → [environment] 段, key=docker_image
-    ///   ${task.metadata.difficulty}    → [metadata] 段, key=difficulty
-    ///   ${task.verifier.env.XXX}       → [verifier.env] 段, key=XXX
-    /// </summary>
-    private static string? ResolveFromToml(string variablePath, string taskDirectory)
-    {
-        var tomlPath = Path.Combine(taskDirectory, "task.toml");
-        if (!File.Exists(tomlPath))
-            return null;
-
-        var tomlContent = File.ReadAllText(tomlPath);
-
-        // 移除 "task." 前缀
-        var path = variablePath.Substring(5); // "task.".Length == 5
-        var parts = path.Split('.');
-
-        string sectionName;
-        string keyName;
-
-        if (parts.Length == 1)
-        {
-            // ${task.name} → [task] section, key = name
-            sectionName = "task";
-            keyName = parts[0];
-        }
-        else
-        {
-            // ${task.environment.docker_image} → [environment], key = docker_image
-            // ${task.verifier.env.XXX}         → [verifier.env], key = XXX
-            keyName = parts[^1];
-            sectionName = string.Join(".", parts.Take(parts.Length - 1));
-        }
-
-        return ExtractTomlValue(tomlContent, sectionName, keyName);
-    }
-
-    /// <summary>
-    /// 从 TOML 文本的指定段中提取指定键的值
-    /// 支持带引号的字符串值和不带引号的简单值
-    /// </summary>
-    private static string? ExtractTomlValue(string tomlContent, string sectionName, string keyName)
-    {
-        // 构建正则：匹配 [section] 头部，然后在该段内查找 key = "value" 或 key = value
-        var escapedSection = Regex.Escape(sectionName);
-        var escapedKey = Regex.Escape(keyName);
-
-        // 模式：\[section\] ... key = "value"  (字符串值)
-        var quotedPattern = $@"\[{escapedSection}\]\s*[^\[]*?{escapedKey}\s*=\s*""([^""]*)""";
-        var quotedMatch = Regex.Match(tomlContent, quotedPattern, RegexOptions.Singleline);
-        if (quotedMatch.Success)
-            return quotedMatch.Groups[1].Value;
-
-        // 模式：\[section\] ... key = value  (非字符串值，如数字、布尔)
-        var unquotedPattern = $@"\[{escapedSection}\]\s*[^\[]*?{escapedKey}\s*=\s*(\S+)";
-        var unquotedMatch = Regex.Match(tomlContent, unquotedPattern, RegexOptions.Singleline);
-        if (unquotedMatch.Success)
-            return unquotedMatch.Groups[1].Value;
-
-        return null;
+        return new[] { new RuntimeVariableProvider(runtimeVars) }.Concat(_fixedProviders);
     }
 
     [GeneratedRegex(@"\$\{([^}]+)\}")]
     private static partial Regex VariablePattern();
+
+    // ==================== 内置 Provider 实现 ====================
+
+    private class TomlVariableProvider : IVariableProvider
+    {
+        public string? TryResolve(string variableName, string? taskDirectory)
+        {
+            if (!variableName.StartsWith("task.", StringComparison.OrdinalIgnoreCase) || taskDirectory == null)
+                return null;
+
+            var tomlPath = Path.Combine(taskDirectory, "task.toml");
+            if (!File.Exists(tomlPath))
+                return null;
+
+            var tomlContent = File.ReadAllText(tomlPath);
+            var path = variableName[5..]; // remove "task."
+            var parts = path.Split('.');
+
+            string sectionName, keyName;
+            if (parts.Length == 1)
+            {
+                sectionName = "task";
+                keyName = parts[0];
+            }
+            else
+            {
+                keyName = parts[^1];
+                sectionName = string.Join(".", parts.Take(parts.Length - 1));
+            }
+
+            return ExtractTomlValue(tomlContent, sectionName, keyName);
+        }
+
+        private static string? ExtractTomlValue(string tomlContent, string sectionName, string keyName)
+        {
+            var escapedSection = Regex.Escape(sectionName);
+            var escapedKey = Regex.Escape(keyName);
+
+            var quotedPattern = $@"\[{escapedSection}\]\s*[^\[]*?{escapedKey}\s*=\s*""([^""]*)""";
+            var quotedMatch = Regex.Match(tomlContent, quotedPattern, RegexOptions.Singleline);
+            if (quotedMatch.Success)
+                return quotedMatch.Groups[1].Value;
+
+            var unquotedPattern = $@"\[{escapedSection}\]\s*[^\[]*?{escapedKey}\s*=\s*(\S+)";
+            var unquotedMatch = Regex.Match(tomlContent, unquotedPattern, RegexOptions.Singleline);
+            if (unquotedMatch.Success)
+                return unquotedMatch.Groups[1].Value;
+
+            return null;
+        }
+    }
+
+    private class ConfigVariableProvider : IVariableProvider
+    {
+        private readonly Dictionary<string, string> _envVars;
+
+        public ConfigVariableProvider(Dictionary<string, string> envVars)
+        {
+            _envVars = new Dictionary<string, string>(envVars, StringComparer.OrdinalIgnoreCase);
+        }
+
+        public void Update(Dictionary<string, string> envVars)
+        {
+            _envVars.Clear();
+            foreach (var kv in envVars)
+                _envVars[kv.Key] = kv.Value;
+        }
+
+        public string? TryResolve(string variableName, string? taskDirectory)
+        {
+            return _envVars.TryGetValue(variableName, out var value) && !string.IsNullOrEmpty(value)
+                ? value
+                : null;
+        }
+    }
 }

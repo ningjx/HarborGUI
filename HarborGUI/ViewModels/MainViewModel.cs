@@ -667,8 +667,7 @@ var report = await _verifyService.VerifyTaskAsync(task, rules, progress, token, 
         foreach (var item in EnvVars)
             _appConfig.EnvironmentVariables[item.Key] = item.Value;
 
-        if (_variableResolver is VariableResolver vr)
-            vr.UpdateEnvironmentVariables(_appConfig.EnvironmentVariables);
+        _variableResolver.UpdateEnvironmentVariables(_appConfig.EnvironmentVariables);
 
         SaveAppConfigDeferred();
     }

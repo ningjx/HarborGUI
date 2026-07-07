@@ -1,6 +1,15 @@
 {
   "VerifyRules": [
     {
+      "RuleName": "反斜杠检测",
+      "Commands": ["$env:PYTHONUTF8 = \"1\""],
+      "ExitCode": "0",
+      "VerifyScript": "./backslash_detect.py ${Zip_Path}",
+      "MatchResult": "0",
+      "FailContinue": false,
+      "ResultFormat":"\n检测项目:反斜杠检测\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
+    },
+    {
       "RuleName": "文件完整性",
       "Commands": ["$env:PYTHONUTF8 = \"1\""],
       "ExitCode": "0",
