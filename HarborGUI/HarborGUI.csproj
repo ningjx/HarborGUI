@@ -24,9 +24,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
-    <!-- config.json 是用户数据，不随构建覆盖 -->
+    <!-- config.json 发布时包含预置配置，本地构建时不覆盖用户数据 -->
     <None Update="Config\config.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
     <!-- Config 目录下所有 Python 脚本 -->
     <None Update="Config\*.py">
