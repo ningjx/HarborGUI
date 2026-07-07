@@ -20,7 +20,7 @@
     },
     {
       "RuleName": "金标轨迹验证",
-      "Commands": ["$env:PYTHONUTF8 = \"1\"","uv run --with harbor python -m harbor.utils.trajectory_validator ./golden-trajectory/agent/trajectory.json"],
+      "Commands": ["uv run --with harbor python -m harbor.utils.trajectory_validator ./golden-trajectory/agent/trajectory.json"],
       "ExitCode": "0",
       "VerifyScript": "",
       "MatchResult": "",
