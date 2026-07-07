@@ -1,0 +1,22 @@
+{
+  "WindowState": {
+    "Width": 1531.2,
+    "Height": 882.4000000000001,
+    "Left": 735.2,
+    "Top": 190.4,
+    "Maximized": false
+  },
+  "LastWorkingDirectory": "",
+  "LastConfigPath": "",
+  "EnvironmentVariables": {
+    "API_KEY": "",
+    "Base_URL": "https://api.deepseek.com/anthropic",
+    "Model_Name": "deepseek-v4-pro"
+  },
+  "MaxParallelTasks": 0,
+  "CustomButton": {
+    "Label": "一键打包",
+    "Script": "./pack_files.py"
+  },
+  "LogTool": "notepad"
+}
