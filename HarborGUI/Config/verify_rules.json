@@ -10,10 +10,19 @@
       "ResultFormat":"\n检测项目:文件完整性\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
     },
     {
+      "RuleName": "金标轨迹验证",
+      "Commands": ["$env:PYTHONUTF8 = \"1\"","python -m harbor.utils.trajectory_validator ./golden-trajectory/agent/trajectory.json"],
+      "ExitCode": "0",
+      "VerifyScript": "",
+      "MatchResult": "",
+      "FailContinue": false,
+      "ResultFormat":"\n检测项目:金标轨迹验证\n检测结果:${Vaild_Result}"
+    },
+    {
       "RuleName": "Docker构建",
       "Commands": ["docker build -t ${task.environment.docker_image} .\\environment\\"],
       "ExitCode": "0",
-      "MatchResult": "0",
+      "MatchResult": "",
       "FailContinue": false,
       "ResultFormat":"\n检测项目:Docker构建\n检测结果:${Vaild_Result}"
     },
