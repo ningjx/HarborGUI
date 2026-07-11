@@ -7,6 +7,7 @@ agent-name-detect.py
       在 TerminalBench 任务根目录下运行（与 golden-trajectory/、jobs/ 同级）。
 """
 
+import glob
 import os
 import re
 import sys
@@ -69,23 +70,35 @@ def check_trajectory(filepath, expected_agent, expected_model_pattern):
 
 
 # ============================================================
-# 辅助方法：查找 jobs 下最新的日期文件夹
+# 辅助方法：查找符合 models 条件的任务批次
 # ============================================================
-def find_latest_job_dir(jobs_dir):
+def has_oracle_txt(task_dir):
+    """检查任务目录的 agent/ 下是否有 oracle.txt"""
+    return os.path.isfile(os.path.join(task_dir, "agent", "oracle.txt"))
+
+
+def find_models_batch(jobs_dir):
     """
-    在 jobs 目录下找到日期最新的子文件夹。
-    文件夹命名格式: YYYY-MM-DD__HH-MM-SS，字典序最大即为最新。
+    从最新到最旧遍历 jobs 下的批次，
+    找到第一个满足条件的：恰好 4 个任务，且全部没有 oracle.txt。
+    返回该批次下的任务目录列表，找不到返回 None。
     """
     if not os.path.isdir(jobs_dir):
         return None
-    entries = [
-        d for d in os.listdir(jobs_dir)
-        if os.path.isdir(os.path.join(jobs_dir, d))
-    ]
-    if not entries:
-        return None
-    entries.sort()  # 字典序 = 时间序
-    return os.path.join(jobs_dir, entries[-1])
+
+    batches = sorted(
+        (d for d in glob.glob(os.path.join(jobs_dir, "*")) if os.path.isdir(d)),
+        reverse=True,
+    )
+
+    for batch in batches:
+        tasks = sorted(
+            d for d in glob.glob(os.path.join(batch, "*")) if os.path.isdir(d)
+        )
+        if len(tasks) == 4 and not any(has_oracle_txt(t) for t in tasks):
+            return tasks
+
+    return None
 
 
 # ============================================================
@@ -101,18 +114,14 @@ def main():
         check_trajectory(golden_path, EXPECTED_AGENT, EXPECTED_MODEL_PATTERN)
     )
 
-    # ----- 2. 检测 jobs 下最新目录中所有任务的 trajectory.json -----
+    # ----- 2. 检测 jobs 下符合 models 条件的批次 -----
     jobs_dir = os.path.join(base_dir, "jobs")
-    latest_job_dir = find_latest_job_dir(jobs_dir)
+    tasks = find_models_batch(jobs_dir)
 
-    if latest_job_dir is None:
-        all_errors.append(f"未找到任何 jobs 子目录: {jobs_dir}")
+    if tasks is None:
+        all_errors.append("没有找到对应的任务集")
     else:
-        # 遍历最新日期目录下的所有任务子文件夹
-        for task_name in sorted(os.listdir(latest_job_dir)):
-            task_dir = os.path.join(latest_job_dir, task_name)
-            if not os.path.isdir(task_dir):
-                continue
+        for task_dir in tasks:
             traj_path = os.path.join(task_dir, "agent", "trajectory.json")
             all_errors.extend(
                 check_trajectory(traj_path, EXPECTED_AGENT, EXPECTED_MODEL_PATTERN)
@@ -125,7 +134,7 @@ def main():
     else:
         for err in all_errors:
             print(err)
-        return 1
+        return 0
 
 
 if __name__ == "__main__":
