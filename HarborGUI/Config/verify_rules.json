@@ -6,7 +6,7 @@
       "ExitCode": "0",
       "VerifyScript": "./backslash_detect.py ${Zip_Path}",
       "MatchResult": "0",
-      "FailContinue": false,
+      "FailContinue": true,
       "ResultFormat":"\n检测项目:反斜杠检测\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
     },
     {
@@ -15,7 +15,7 @@
       "ExitCode": "0",
       "VerifyScript": "./valid_file_exist.py",
       "MatchResult": "0",
-      "FailContinue": false,
+      "FailContinue": true,
       "ResultFormat":"\n检测项目:文件完整性\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
     },
     {
@@ -24,7 +24,7 @@
       "ExitCode": "0",
       "VerifyScript": "",
       "MatchResult": "",
-      "FailContinue": false,
+      "FailContinue": true,
       "ResultFormat":"\n检测项目:金标轨迹验证\n检测结果:${Vaild_Result}"
     },
     {
@@ -33,11 +33,11 @@
       "ExitCode": "0",
       "VerifyScript": "./agent-name-detect.py",
       "MatchResult": "0",
-      "FailContinue": false,
+      "FailContinue": true,
       "ResultFormat":"\n检测项目:Agent/模型验证\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
     },
     {
-      "RuleName": "模型通过率",
+      "RuleName": "本地通过率",
       "Commands": [],
       "ExitCode": "0",
       "VerifyScript": "./pass_rate.py models",
@@ -59,8 +59,16 @@
       "ExitCode": "0",
       "VerifyScript": "./pass_rate.py oracle",
       "MatchResult": "1.0",
-      "FailContinue": true,
+      "FailContinue": false,
       "ResultFormat":"\n检测项目:Oracle验证\n检测结果:${Vaild_Result}\nReward:${Script_Output}"
+    },
+    {
+      "RuleName": "模型通过率",
+      "Commands": ["$env:PYTHONUTF8 = \"1\"", "uv run harbor job start -p . -a claude-code -m model -k 4 -n 4 --ae ANTHROPIC_API_KEY=${API_KEY} --ae ANTHROPIC_BASE_URL=${Base_URL} --ae ANTHROPIC_MODEL=${Model_Name} --agent-kwarg reasoning_effort=max --agent-kwarg disallowed_tools=\"EnterPlanMode,ExitPlanMode,AskUserQuestion\""],
+      "ExitCode": "0",
+      "VerifyScript": "./pass_rate.py",
+      "MatchResult": "(0,0.5]",
+      "ResultFormat":"\n检测项目:模型通过率\n检测结果:${Vaild_Result}\n通过率:${Script_Output}"
     }
   ]
 }
