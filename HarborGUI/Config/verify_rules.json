@@ -37,7 +37,7 @@
       "ResultFormat":"\n检测项目:Agent/模型验证\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
     },
     {
-      "RuleName": "本地通过率",
+      "RuleName": "本地模型通过率",
       "Commands": [],
       "ExitCode": "0",
       "VerifyScript": "./pass_rate.py models",
@@ -66,7 +66,7 @@
       "RuleName": "模型通过率",
       "Commands": ["$env:PYTHONUTF8 = \"1\"", "uv run harbor job start -p . -a claude-code -m model -k 4 -n 4 --ae ANTHROPIC_API_KEY=${API_KEY} --ae ANTHROPIC_BASE_URL=${Base_URL} --ae ANTHROPIC_MODEL=${Model_Name} --agent-kwarg reasoning_effort=max --agent-kwarg disallowed_tools=\"EnterPlanMode,ExitPlanMode,AskUserQuestion\""],
       "ExitCode": "0",
-      "VerifyScript": "./pass_rate.py",
+      "VerifyScript": "./pass_rate.py models",
       "MatchResult": "(0,0.5]",
       "ResultFormat":"\n检测项目:模型通过率\n检测结果:${Vaild_Result}\n通过率:${Script_Output}"
     }
