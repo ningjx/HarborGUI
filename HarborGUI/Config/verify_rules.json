@@ -2,12 +2,20 @@
   "VerifyRules": [
     {
       "RuleName": "反斜杠检测",
-      "Commands": ["$env:PYTHONUTF8 = \"1\""],
-      "ExitCode": "0",
+      "Commands": [],
+      "ExitCode": "",
       "VerifyScript": "./backslash_detect.py ${Zip_Path}",
       "MatchResult": "0",
       "FailContinue": true,
       "ResultFormat":"\n检测项目:反斜杠检测\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
+    },{
+      "RuleName": "根目录检测",
+      "Commands": [],
+      "ExitCode": "",
+      "VerifyScript": "./count_root_dirs.py ${Zip_Path}",
+      "MatchResult": "[3,8]",
+      "FailContinue": true,
+      "ResultFormat":"\n检测项目:根目录检测\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
     },
     {
       "RuleName": "文件完整性",
@@ -19,13 +27,22 @@
       "ResultFormat":"\n检测项目:文件完整性\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
     },
     {
-      "RuleName": "金标轨迹验证",
+      "RuleName": "金标轨迹格式",
       "Commands": ["uv run --with harbor python -m harbor.utils.trajectory_validator ./golden-trajectory/agent/trajectory.json"],
       "ExitCode": "0",
       "VerifyScript": "",
       "MatchResult": "",
       "FailContinue": true,
       "ResultFormat":"\n检测项目:金标轨迹验证\n检测结果:${Vaild_Result}"
+    },
+    {
+      "RuleName": "金标得分",
+      "Commands": ["$ProgressPreference = \"SilentlyContinue\"; $content = (Get-Content .\\golden-trajectory\\verifier\\reward.txt).Trim(); if ($content -ne \"1\") { \"Expected 1, got: $content\"; exit 1 }"],
+      "ExitCode": "0",
+      "VerifyScript": "",
+      "MatchResult": "",
+      "FailContinue": true,
+      "ResultFormat":"\n检测项目:金标得分\n检测结果:${Vaild_Result}"
     },
     {
       "RuleName": "Agent/模型验证",
@@ -37,13 +54,31 @@
       "ResultFormat":"\n检测项目:Agent/模型验证\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
     },
     {
+      "RuleName": "test.sh嵌入检测",
+      "Commands": [],
+      "ExitCode": "0",
+      "VerifyScript": "./script_write_chars.py",
+      "MatchResult": "[0,20]",
+      "FailContinue": true,
+      "ResultFormat":"\n检测项目:test.sh嵌入检测\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
+    },
+    {
       "RuleName": "本地模型通过率",
       "Commands": [],
       "ExitCode": "0",
-      "VerifyScript": "./pass_rate.py models",
-      "MatchResult": "(0,0.5]",
+      "VerifyScript": "./verify_local_pass.py",
+      "MatchResult": "0",
       "FailContinue": true,
-      "ResultFormat":"\n检测项目:模型通过率\n检测结果:${Vaild_Result}\n通过率:${Script_Output}"
+      "ResultFormat":"\n检测项目:本地模型通过率\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
+    },
+    {
+      "RuleName": "镜像检查",
+      "Commands": [],
+      "ExitCode": "",
+      "VerifyScript": "./check-image-exist.py",
+      "MatchResult": "0",
+      "FailContinue": false,
+      "ResultFormat":"\n检测项目:镜像检查\n检测结果:${Vaild_Result}"
     },
     {
       "RuleName": "Docker构建",
@@ -64,9 +99,9 @@
     },
     {
       "RuleName": "模型通过率",
-      "Commands": ["$env:PYTHONUTF8 = \"1\"", "uv run harbor job start -p . -a claude-code -m model -k 4 -n 4 --ae ANTHROPIC_API_KEY=${API_KEY} --ae ANTHROPIC_BASE_URL=${Base_URL} --ae ANTHROPIC_MODEL=${Model_Name} --agent-kwarg reasoning_effort=max --agent-kwarg disallowed_tools=\"EnterPlanMode,ExitPlanMode,AskUserQuestion\""],
+      "Commands": ["$env:PYTHONUTF8 = \"1\"","$env:DEEPSEEK_API_KEY = \"${API_KEY}\"", "harbor run -p . --agent terminus-2 --model deepseek/deepseek-v4-pro --ak reasoning_effort=max --n-attempts 4"],
       "ExitCode": "0",
-      "VerifyScript": "./pass_rate.py models",
+      "VerifyScript": "./pass_rate.py",
       "MatchResult": "(0,0.5]",
       "ResultFormat":"\n检测项目:模型通过率\n检测结果:${Vaild_Result}\n通过率:${Script_Output}"
     }

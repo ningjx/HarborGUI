@@ -18,19 +18,9 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
   </ItemGroup>
 
-  <!-- 将 Config 文件夹复制到输出目录 -->
+  <!-- 将 Config 文件夹所有内容复制到输出目录 -->
   <ItemGroup>
-    <None Update="Config\verify_rules.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </None>
-    <!-- config.json 发布时包含预置配置，本地构建时不覆盖用户数据 -->
-    <None Update="Config\config.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </None>
-    <!-- Config 目录下所有 Python 脚本 -->
-    <None Update="Config\*.py">
+    <None Update="Config\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
