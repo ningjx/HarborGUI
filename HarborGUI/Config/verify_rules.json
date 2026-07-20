@@ -1,6 +1,14 @@
 {
   "VerifyRules": [
     {
+      "RuleName": "查重",
+      "Commands": [],
+      "ExitCode": "",
+      "VerifyScript": "./check_instruction_dedup.py ${Zip_Path} --ignore-same-name",
+      "MatchResult": "0",
+      "FailContinue": false,
+      "ResultFormat": "\n检测项目:查重\n检测结果:${Vaild_Result}\n检测详情:${Script_Output}"
+    },{
       "RuleName": "反斜杠检测",
       "Commands": [],
       "ExitCode": "",
